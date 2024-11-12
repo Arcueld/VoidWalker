@@ -11,3 +11,4 @@
 LPCWSTR charToLPCWSTR(const char* charString);
 LPSTR charToLPSTR(const char* str);
 LPWSTR charToLPWSTR(const char* charString);
+void setConsoleColor(int colorCode);

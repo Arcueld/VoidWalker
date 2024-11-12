@@ -48,28 +48,7 @@ typedef NTSTATUS (NTAPI* pNtDelayExecution)(
     IN BOOLEAN              Alertable,
     IN PLARGE_INTEGER       DelayInterval);
 
-BOOL checkIsAdmin() {
-    HANDLE hToken = NULL;
-    TOKEN_ELEVATION elevation;
 
-    // 打开当前进程的访问令牌
-    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken)) {
-        return FALSE;
-    }
-
-    // 获取令牌的提升信息
-    DWORD dwSize;
-    if (GetTokenInformation(hToken, TokenElevation, &elevation, sizeof(elevation), &dwSize)) {
-        // 如果 TokenIsElevated 为 TRUE，表示程序具有管理员权限
-        if (elevation.TokenIsElevated) {
-            CloseHandle(hToken);
-            return TRUE;
-        }
-    }
-
-    CloseHandle(hToken);
-    return FALSE;
-}
 /*
 通过SystemInfo检测CPU核心数
 */
@@ -640,7 +619,7 @@ BOOL checkUsernames() {
     };
 
     std::string currentUsername(username);
-    std:: cout << currentUsername << std::endl;
+    // std:: cout << currentUsername << std::endl;
     for (const auto& knownUsername : usernames) {
         // 大小写不敏感的比较
         if (caseInsensitiveCompare(currentUsername, knownUsername)) {
@@ -963,6 +942,7 @@ BOOL query_license_value()
     if (RtlInitUnicodeString == nullptr || NtQueryLicenseValue == nullptr)
         return FALSE;
 
+
     UNICODE_STRING LicenseValue;
     RtlInitUnicodeString(&LicenseValue, L"Kernel-VMDetection-Private");
 
@@ -971,10 +951,11 @@ BOOL query_license_value()
     NTSTATUS Status = NtQueryLicenseValue(&LicenseValue, NULL, reinterpret_cast<PVOID>(&Result), sizeof(ULONG), &ReturnLength);
 
     if (NT_SUCCESS(Status)) {
-        return !Result;
+        return (Result != 0);
     }
 
     return FALSE;
+
 }
 
 #define LODWORD(_qw)    ((DWORD)(_qw))
@@ -1301,30 +1282,211 @@ BOOL checkService() {
     return false;
 }
 
-int main()
-{
 
-
-
-
-
-    
-    /*RawSMBIOSData* smbiosData = get_smbios_data();
-    if (smbiosData) {
-        parse_smbios_data(smbiosData);
-        delete[](BYTE*)smbiosData;
+void checkAll() {
+    if (checkCPUCorNum()) {
+        setConsoleColor(12);
+        std::cout << "Detect as a VM based on the number of CPU cores.[+]" << std::endl;
     }
-    getchar();*/
-    /*std::string host = "abcdeed.free.beeceptor.com";
-    std::string path = "/?";
-    path.append(std::string(rdtsc_diff_locky() ? "1" : "0"));
+    else {
+        setConsoleColor(10);
+        std::cout << "Detect as physical environment based on the number of CPU cores.[-]" << std::endl;
+    }
+
+    if (checkPhysicalMemory()) {
+        setConsoleColor(12);
+        std::cout << "Detect as a VM based on physical memory size.[+]" << std::endl;
+    }
+    else {
+        setConsoleColor(10);
+        std::cout << "Detect as physical environment based on physical memory size.[-]" << std::endl;
+    }
+
+    if (checkTotalDiskSize()) {
+        setConsoleColor(12);
+        std::cout << "Detect as a VM based on total disk size.[+]" << std::endl;
+    }
+    else {
+        setConsoleColor(10);
+        std::cout << "Detect as physical environment based on total disk size.[-]" << std::endl;
+    }
+
+    if (checkProcess()) {
+        setConsoleColor(12);
+        std::cout << "Detect as a VM based on specific processes.[+]" << std::endl;
+    }
+    else {
+        setConsoleColor(10);
+        std::cout << "Detect as physical environment based on specific processes.[-]" << std::endl;
+    }
+
+    if (checkHardwareInfo()) {
+        setConsoleColor(12);
+        std::cout << "Detect as a VM based on hardware information.[+]" << std::endl;
+    }
+    else {
+        setConsoleColor(10);
+        std::cout << "Detect as physical environment based on hardware information.[-]" << std::endl;
+    }
+
+    if (checkBootTime()) {
+        setConsoleColor(12);
+        std::cout << "Detect as a VM based on system boot time.[+]" << std::endl;
+    }
+    else {
+        setConsoleColor(10);
+        std::cout << "Detect as physical environment based on system boot time.[-]" << std::endl;
+    }
+
+    if (checkHyperVPresent()) {
+        setConsoleColor(12);
+        std::cout << "Detect as a VM based on Hyper-V presence.[+]" << std::endl;
+    }
+    else {
+        setConsoleColor(10);
+        std::cout << "Detect as physical environment based on Hyper-V presence.[-]" << std::endl;
+    }
+
+    if (checkTempFileCount(15)) {
+        setConsoleColor(12);
+        std::cout << "Detect as a VM based on temp file count.[+]" << std::endl;
+    }
+    else {
+        setConsoleColor(10);
+        std::cout << "Detect as physical environment based on temp file count.[-]" << std::endl;
+    }
+
+    if (checkCPUTemperature()) {
+        setConsoleColor(12);
+        std::cout << "Detect as a VM based on CPU temperature.[+]" << std::endl;
+    }
+    else {
+        setConsoleColor(10);
+        std::cout << "Detect as physical environment based on CPU temperature.[-]" << std::endl;
+    }
+
+    if (checkGPUMemory()) {
+        setConsoleColor(12);
+        std::cout << "Detect as a VM based on GPU memory.[+]" << std::endl;
+    }
+    else {
+        setConsoleColor(10);
+        std::cout << "Detect as physical environment based on GPU memory.[-]" << std::endl;
+    }
+
+    if (checkMacAddrPrefix()) {
+        setConsoleColor(12);
+        std::cout << "Detect as a VM based on MAC address prefix.[+]" << std::endl;
+    }
+    else {
+        setConsoleColor(10);
+        std::cout << "Detect as physical environment based on MAC address prefix.[-]" << std::endl;
+    }
+
+    if (checkUsernames()) {
+        setConsoleColor(12);
+        std::cout << "Detect as a VM based on usernames.[+]" << std::endl;
+    }
+    else {
+        setConsoleColor(10);
+        std::cout << "Detect as physical environment based on usernames.[-]" << std::endl;
+    }
+
+    if (checkNetBIOS()) {
+        setConsoleColor(12);
+        std::cout << "Detect as a VM based on NetBIOS name.[+]" << std::endl;
+    }
+    else {
+        setConsoleColor(10);
+        std::cout << "Detect as physical environment based on NetBIOS name.[-]" << std::endl;
+    }
+
+    if (isParentRundll32()) {
+        setConsoleColor(12);
+        std::cout << "Detect as a VM based on rundll32 parent process.[+]" << std::endl;
+    }
+    else {
+        setConsoleColor(10);
+        std::cout << "Detect as physical environment based on rundll32 parent process.[-]" << std::endl;
+    }
+
+    if (checkCurrentProcessFileName(L"VoidWalker")) {
+        setConsoleColor(12);
+        std::cout << "Detect as a VM based on current process filename.[+]" << std::endl;
+    }
+    else {
+        setConsoleColor(10);
+        std::cout << "Detect as physical environment based on current process filename.[-]" << std::endl;
+    }
+
+    if (check_run_path()) {
+        setConsoleColor(12);
+        std::cout << "Detect as a VM based on executable run path.[+]" << std::endl;
+    }
+    else {
+        setConsoleColor(10);
+        std::cout << "Detect as physical environment based on executable run path.[-]" << std::endl;
+    }
+
+    if (checkdlls()) {
+        setConsoleColor(12);
+        std::cout << "Detect as a VM based on DLLs loaded.[+]" << std::endl;
+    }
+    else {
+        setConsoleColor(10);
+        std::cout << "Detect as physical environment based on DLLs loaded.[-]" << std::endl;
+    }
+
+    if (power_capabilities()) {
+        setConsoleColor(12);
+        std::cout << "Detect as a VM based on power capabilities.[+]" << std::endl;
+    }
+    else {
+        setConsoleColor(10);
+        std::cout << "Detect as physical environment based on power capabilities.[-]" << std::endl;
+    }
+
+    if (query_license_value()) {
+        setConsoleColor(12);
+        std::cout << "Detect as a VM based on license values.[+]" << std::endl;
+    }
+    else {
+        setConsoleColor(10);
+        std::cout << "Detect as physical environment based on license values.[-]" << std::endl;
+    }
+
+    if (check_motherboard_vmware()) {
+        setConsoleColor(12);
+        std::cout << "Detect as a VM based on motherboard info.[+]" << std::endl;
+    }
+    else {
+        setConsoleColor(10);
+        std::cout << "Detect as physical environment based on motherboard info.[-]" << std::endl;
+    }
+
+    if (mouse_movement()) {
+        setConsoleColor(12);
+        std::cout << "Detect as a VM based on mouse movement.[+]" << std::endl;
+    }
+    else {
+        setConsoleColor(10);
+        std::cout << "Detect as physical environment based on mouse movement.[-]" << std::endl;
+    }
+
+    if (rdtsc_diff_locky()) {
+        setConsoleColor(12);
+        std::cout << "Detect as a VM based on RDTSC timing.[+]" << std::endl;
+    }
+    else {
+        setConsoleColor(10);
+        std::cout << "Detect as physical environment based on RDTSC timing.[-]" << std::endl;
+    }
+    setConsoleColor(7);
+}
 
 
-
-    std::string response = httpGet(host, path);*/
-
-    std::cout << checkService() << std::endl;
-
+int main(){
+    checkAll();
     return 0;
 }
 

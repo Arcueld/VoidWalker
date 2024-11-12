@@ -48,3 +48,9 @@ LPWSTR charToLPWSTR(const char* charString) {
 
 	return wideString;
 }
+void setConsoleColor(int colorCode) {
+#ifdef _WIN32
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(hConsole, colorCode);  // 设置颜色
+#endif
+}
