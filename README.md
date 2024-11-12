@@ -1,6 +1,6 @@
 # 常见反沙箱反虚拟机技术总结
 
-详见:
+详见:https://xz.aliyun.com/t/16201
 
 ## vmware
 
