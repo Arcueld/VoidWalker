@@ -720,7 +720,7 @@ BOOL checkCurrentProcessFileName(const std::wstring& targetSubstring) {
     }
 
     // 检查文件名是否包含目标子字符串（不区分大小写）
-    return executablePath.find(targetSubstring) != std::wstring::npos;
+    return executablePath.find(targetSubstring) == std::wstring::npos;
 }
 
 BOOL check_run_path() {
